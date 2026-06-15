@@ -43,23 +43,54 @@ function PointPage() {
   const [speed, setSpeed] = useState<number>(1);
   const [easy, setEasy] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [advancing, setAdvancing] = useState(false);
   const startedAt = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const text = easy ? point.easy : point.full;
   // crude estimate ~ 12 chars/sec at speed 1
   const totalSec = Math.max(6, text.length / (12 * speed));
+
+  const idx = POINTS.findIndex((p) => p.id === point.id);
+  const nextPoint = POINTS[idx + 1];
+
+  const clearAdvance = () => {
+    if (advanceTimer.current) {
+      clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+    setAdvancing(false);
+  };
 
   const stop = () => {
     stopSpeak();
     setPlaying(false);
     setProgress(0);
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    clearAdvance();
+  };
+
+  const handleSpeechEnd = () => {
+    setPlaying(false);
+    setProgress(100);
+    if (!autoAdvance) return;
+    if (nextPoint) {
+      setAdvancing(true);
+      advanceTimer.current = setTimeout(() => {
+        navigate({ to: "/punto/$id", params: { id: nextPoint.id } });
+      }, 2500);
+    } else {
+      setAdvancing(true);
+      advanceTimer.current = setTimeout(() => navigate({ to: "/fin" }), 2500);
+    }
   };
 
   const play = () => {
     stopSpeak();
-    speak(text, { rate: speed });
+    clearAdvance();
+    speak(text, { rate: speed, onEnd: handleSpeechEnd });
     setPlaying(true);
     startedAt.current = performance.now();
     const tick = () => {
@@ -67,7 +98,6 @@ function PointPage() {
       const pct = Math.min(100, (elapsed / totalSec) * 100);
       setProgress(pct);
       if (pct >= 100) {
-        setPlaying(false);
         return;
       }
       rafRef.current = requestAnimationFrame(tick);
