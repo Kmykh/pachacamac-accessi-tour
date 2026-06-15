@@ -4,6 +4,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Radio } from "lucide
 import { AppShell } from "@/components/AppShell";
 import { getPoint, POINTS } from "@/lib/points";
 import { speak, stopSpeak } from "@/lib/speech";
+import { useA11y } from "@/lib/a11y-context";
+
 
 export const Route = createFileRoute("/punto/$id")({
   head: ({ params }) => {
@@ -39,11 +41,11 @@ const SPEEDS = [0.75, 1, 1.25] as const;
 function PointPage() {
   const { point } = Route.useLoaderData();
   const navigate = useNavigate();
+  const { voiceFirst, easyReading: easyDefault, advanceMode, setAdvanceMode, profile } = useA11y();
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<number>(1);
-  const [easy, setEasy] = useState(false);
+  const [easy, setEasy] = useState(easyDefault);
   const [progress, setProgress] = useState(0);
-  const [autoAdvance, setAutoAdvance] = useState(true);
   const [advancing, setAdvancing] = useState(false);
   const startedAt = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
@@ -75,11 +77,12 @@ function PointPage() {
   const handleSpeechEnd = () => {
     setPlaying(false);
     setProgress(100);
-    if (!autoAdvance) return;
+    // Solo auto-avanzar si el modo es "al terminar lectura"
+    if (advanceMode !== "speech-end") return;
     if (nextPoint) {
       setAdvancing(true);
       advanceTimer.current = setTimeout(() => {
-        navigate({ to: "/punto/$id", params: { id: nextPoint.id } });
+        navigate({ to: "/beacon/$id", params: { id: nextPoint.id } });
       }, 2500);
     } else {
       setAdvancing(true);
@@ -105,15 +108,16 @@ function PointPage() {
     rafRef.current = requestAnimationFrame(tick);
   };
 
-  // beacon auto-play on mount
+  // beacon auto-play on mount — solo si el perfil prefiere voz primero
   useEffect(() => {
+    if (!voiceFirst) return;
     const t = setTimeout(play, 600);
     return () => {
       clearTimeout(t);
       stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [point.id]);
+  }, [point.id, voiceFirst]);
 
   // reset when text/speed change
   useEffect(() => {
@@ -194,31 +198,46 @@ function PointPage() {
           )}
         </div>
 
-        <div className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-xl border-2 border-border bg-card px-4 py-2 text-sm">
-          <label htmlFor="auto-advance" className="font-semibold">
-            Avance automático al siguiente punto
-          </label>
-          <button
-            id="auto-advance"
-            type="button"
-            role="switch"
-            aria-checked={autoAdvance}
-            onClick={() => {
-              setAutoAdvance((v) => {
-                if (v) clearAdvance();
-                return !v;
-              });
-            }}
-            className={`relative h-7 w-12 shrink-0 rounded-full border-2 transition-colors ${
-              autoAdvance ? "border-primary bg-primary" : "border-border bg-muted"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-card transition-transform ${
-                autoAdvance ? "translate-x-5" : "translate-x-0.5"
+        <div className="mx-4 mt-3 rounded-xl border-2 border-border bg-card p-3 text-sm">
+          <p className="mb-2 font-semibold">¿Cuándo avanzar al siguiente punto?</p>
+          <div role="radiogroup" aria-label="Modo de avance al siguiente punto" className="flex gap-2">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={advanceMode === "speech-end"}
+              onClick={() => {
+                setAdvanceMode("speech-end");
+              }}
+              className={`flex min-h-12 flex-1 items-center justify-center rounded-lg border-2 px-2 text-xs font-bold ${
+                advanceMode === "speech-end"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card"
               }`}
-            />
-          </button>
+            >
+              Al terminar la lectura
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={advanceMode === "next-only"}
+              onClick={() => {
+                setAdvanceMode("next-only");
+                clearAdvance();
+              }}
+              className={`flex min-h-12 flex-1 items-center justify-center rounded-lg border-2 px-2 text-xs font-bold ${
+                advanceMode === "next-only"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card"
+              }`}
+            >
+              Solo con botón Siguiente
+            </button>
+          </div>
+          {profile !== "none" && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Perfil activo: ajustamos voz, texto y avance automáticamente.
+            </p>
+          )}
         </div>
 
 
@@ -313,9 +332,10 @@ function PointPage() {
         >
           {prev ? (
             <Link
-              to="/punto/$id"
+              to="/beacon/$id"
               params={{ id: prev.id }}
               className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-border bg-card px-3 text-sm font-bold"
+              aria-label={`Punto anterior: ${prev.name}. Reconectar con su beacon.`}
             >
               <ChevronLeft className="h-5 w-5" aria-hidden />
               <span className="truncate">Anterior</span>
@@ -325,9 +345,10 @@ function PointPage() {
           )}
           {next ? (
             <Link
-              to="/punto/$id"
+              to="/beacon/$id"
               params={{ id: next.id }}
               className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground"
+              aria-label={`Siguiente punto: ${next.name}. Conectar con su beacon.`}
             >
               <span className="truncate">Siguiente</span>
               <ChevronRight className="h-5 w-5" aria-hidden />

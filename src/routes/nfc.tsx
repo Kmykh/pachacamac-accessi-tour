@@ -80,16 +80,27 @@ function NfcPage() {
           <h1 className="text-lg font-extrabold">Tocar etiqueta NFC</h1>
         </div>
 
-        <div className="relative mx-auto mt-8 grid aspect-square w-full max-w-sm place-items-center rounded-2xl border-2 border-border bg-card">
-          {/* expanding rings while waiting/reading */}
+        <div
+          role="img"
+          aria-label={
+            phase === "waiting"
+              ? "Animación de antenas NFC pulsando, esperando un dispositivo."
+              : phase === "reading"
+                ? "Antenas NFC pulsando, leyendo etiqueta."
+                : "Antena NFC con marca de verificación verde, etiqueta validada."
+          }
+          className="relative mx-auto mt-8 grid aspect-square w-full max-w-sm place-items-center rounded-2xl border-2 border-border bg-card"
+        >
+          {/* expanding rings while waiting/reading - decorativo */}
           {(phase === "waiting" || phase === "reading") && (
             <>
-              <span className="nfc-ring absolute h-40 w-40 rounded-full border-4 border-secondary/60" />
-              <span className="nfc-ring nfc-ring-2 absolute h-40 w-40 rounded-full border-4 border-secondary/40" />
-              <span className="nfc-ring nfc-ring-3 absolute h-40 w-40 rounded-full border-4 border-secondary/20" />
+              <span aria-hidden className="nfc-ring absolute h-40 w-40 rounded-full border-4 border-secondary/60" />
+              <span aria-hidden className="nfc-ring nfc-ring-2 absolute h-40 w-40 rounded-full border-4 border-secondary/40" />
+              <span aria-hidden className="nfc-ring nfc-ring-3 absolute h-40 w-40 rounded-full border-4 border-secondary/20" />
             </>
           )}
           <span
+            aria-hidden
             className={`relative grid h-32 w-32 place-items-center rounded-full ${
               phase === "validated" || phase === "downloading" || phase === "done"
                 ? "bg-success text-success-foreground"
@@ -97,9 +108,9 @@ function NfcPage() {
             } shadow-lg`}
           >
             {phase === "validated" || phase === "downloading" || phase === "done" ? (
-              <Check className="h-14 w-14" aria-hidden />
+              <Check className="h-14 w-14" />
             ) : (
-              <Radio className="h-14 w-14" aria-hidden />
+              <Radio className="h-14 w-14" />
             )}
           </span>
         </div>
@@ -107,6 +118,7 @@ function NfcPage() {
         <div
           role="status"
           aria-live="polite"
+          aria-atomic="true"
           className="mt-6 rounded-xl border-2 border-border bg-card p-4 text-center text-base font-bold"
         >
           {status}

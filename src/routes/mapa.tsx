@@ -95,8 +95,8 @@ function MapPage() {
             <button
               key={p.id}
               type="button"
-              onClick={() => navigate({ to: "/punto/$id", params: { id: p.id } })}
-              aria-label={`Punto ${p.number}: ${p.name}. ${p.short}`}
+              onClick={() => navigate({ to: "/beacon/$id", params: { id: p.id } })}
+              aria-label={`Conectar con el beacon del punto ${p.number}: ${p.name}. ${p.short}`}
               className="absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
             >
@@ -115,9 +115,10 @@ function MapPage() {
           {POINTS.map((p) => (
             <Link
               key={p.id}
-              to="/punto/$id"
+              to="/beacon/$id"
               params={{ id: p.id }}
               className="flex w-60 shrink-0 snap-start flex-col gap-2 rounded-xl border-2 border-border bg-card p-4 text-left"
+              aria-label={`Conectar con beacon del punto ${p.number}: ${p.name}`}
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                 {p.number}

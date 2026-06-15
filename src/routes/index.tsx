@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { QrCode, Radio, Link as LinkIcon, Check, Accessibility } from "lucide-react";
+import { useEffect, useState } from "react";
+import { QrCode, Radio, Link as LinkIcon, Accessibility, UserCog } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { DownloadOverlay } from "@/components/DownloadOverlay";
-import { useA11y } from "@/lib/a11y-context";
+import { useA11y, PROFILE_LABEL } from "@/lib/a11y-context";
+import { speak } from "@/lib/speech";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,9 +22,19 @@ export const Route = createFileRoute("/")({
 
 function WelcomePage() {
   const navigate = useNavigate();
-  const { setDownloaded } = useA11y();
+  const { setDownloaded, profile, voiceFirst } = useA11y();
   const [progress, setProgress] = useState<number | null>(null);
   const [done, setDone] = useState(false);
+
+  // Si aún no hay perfil definido, llevar al usuario a /perfil
+  useEffect(() => {
+    if (profile === "none") {
+      navigate({ to: "/perfil" });
+    } else if (voiceFirst) {
+      speak("Bienvenido a AccessiTour. Elige cómo quieres entrar al recorrido.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startLinkDownload = () => {
     if (progress !== null) return;
@@ -47,7 +58,7 @@ function WelcomePage() {
 
   return (
     <AppShell>
-      <section className="flex flex-col items-center px-5 pb-10 pt-8 text-center">
+      <section className="flex flex-col items-center px-5 pb-10 pt-6 text-center">
         <h1 className="text-3xl font-extrabold tracking-tight text-primary">
           AccessiTour
         </h1>
@@ -58,7 +69,18 @@ function WelcomePage() {
           Recorrido guiado para todas las personas.
         </p>
 
-        <div className="mt-8 w-full rounded-2xl border-2 border-border bg-card p-5 shadow-sm">
+        {profile !== "none" && (
+          <Link
+            to="/perfil"
+            className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border-2 border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary"
+            aria-label={`Perfil actual: ${PROFILE_LABEL[profile]}. Tocar para cambiar.`}
+          >
+            <UserCog className="h-4 w-4" aria-hidden />
+            <span className="truncate">Perfil: {PROFILE_LABEL[profile]}</span>
+          </Link>
+        )}
+
+        <div className="mt-6 w-full rounded-2xl border-2 border-border bg-card p-5 shadow-sm">
           <h2 className="mb-4 text-left text-lg font-bold">¿Cómo quieres entrar?</h2>
           <div className="flex flex-col gap-3">
             <AccessButton
@@ -130,5 +152,3 @@ function AccessButton({
     </button>
   );
 }
-
-// (DownloadOverlay now lives in src/components/DownloadOverlay.tsx)

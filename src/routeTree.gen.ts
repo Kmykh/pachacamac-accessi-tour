@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as NfcRouteImport } from './routes/nfc'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as FinRouteImport } from './routes/fin'
@@ -16,7 +17,13 @@ import { Route as EscanearRouteImport } from './routes/escanear'
 import { Route as AccesibilidadRouteImport } from './routes/accesibilidad'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PuntoIdRouteImport } from './routes/punto.$id'
+import { Route as BeaconIdRouteImport } from './routes/beacon.$id'
 
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NfcRoute = NfcRouteImport.update({
   id: '/nfc',
   path: '/nfc',
@@ -52,6 +59,11 @@ const PuntoIdRoute = PuntoIdRouteImport.update({
   path: '/punto/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BeaconIdRoute = BeaconIdRouteImport.update({
+  id: '/beacon/$id',
+  path: '/beacon/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,6 +72,8 @@ export interface FileRoutesByFullPath {
   '/fin': typeof FinRoute
   '/mapa': typeof MapaRoute
   '/nfc': typeof NfcRoute
+  '/perfil': typeof PerfilRoute
+  '/beacon/$id': typeof BeaconIdRoute
   '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +83,8 @@ export interface FileRoutesByTo {
   '/fin': typeof FinRoute
   '/mapa': typeof MapaRoute
   '/nfc': typeof NfcRoute
+  '/perfil': typeof PerfilRoute
+  '/beacon/$id': typeof BeaconIdRoute
   '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRoutesById {
@@ -79,6 +95,8 @@ export interface FileRoutesById {
   '/fin': typeof FinRoute
   '/mapa': typeof MapaRoute
   '/nfc': typeof NfcRoute
+  '/perfil': typeof PerfilRoute
+  '/beacon/$id': typeof BeaconIdRoute
   '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +108,8 @@ export interface FileRouteTypes {
     | '/fin'
     | '/mapa'
     | '/nfc'
+    | '/perfil'
+    | '/beacon/$id'
     | '/punto/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +119,8 @@ export interface FileRouteTypes {
     | '/fin'
     | '/mapa'
     | '/nfc'
+    | '/perfil'
+    | '/beacon/$id'
     | '/punto/$id'
   id:
     | '__root__'
@@ -108,6 +130,8 @@ export interface FileRouteTypes {
     | '/fin'
     | '/mapa'
     | '/nfc'
+    | '/perfil'
+    | '/beacon/$id'
     | '/punto/$id'
   fileRoutesById: FileRoutesById
 }
@@ -118,11 +142,20 @@ export interface RootRouteChildren {
   FinRoute: typeof FinRoute
   MapaRoute: typeof MapaRoute
   NfcRoute: typeof NfcRoute
+  PerfilRoute: typeof PerfilRoute
+  BeaconIdRoute: typeof BeaconIdRoute
   PuntoIdRoute: typeof PuntoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/nfc': {
       id: '/nfc'
       path: '/nfc'
@@ -172,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PuntoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/beacon/$id': {
+      id: '/beacon/$id'
+      path: '/beacon/$id'
+      fullPath: '/beacon/$id'
+      preLoaderRoute: typeof BeaconIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -182,6 +222,8 @@ const rootRouteChildren: RootRouteChildren = {
   FinRoute: FinRoute,
   MapaRoute: MapaRoute,
   NfcRoute: NfcRoute,
+  PerfilRoute: PerfilRoute,
+  BeaconIdRoute: BeaconIdRoute,
   PuntoIdRoute: PuntoIdRoute,
 }
 export const routeTree = rootRouteImport
