@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { QrCode, Radio, Link as LinkIcon, Check } from "lucide-react";
+import { QrCode, Radio, Link as LinkIcon, Check, Accessibility } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { DownloadOverlay } from "@/components/DownloadOverlay";
 import { useA11y } from "@/lib/a11y-context";
 
 export const Route = createFileRoute("/")({
@@ -24,7 +25,7 @@ function WelcomePage() {
   const [progress, setProgress] = useState<number | null>(null);
   const [done, setDone] = useState(false);
 
-  const start = () => {
+  const startLinkDownload = () => {
     if (progress !== null) return;
     setProgress(0);
     setDone(false);
@@ -64,22 +65,30 @@ function WelcomePage() {
               icon={<QrCode className="h-7 w-7" aria-hidden />}
               label="Escanear QR"
               hint="Apunta la cámara al código del sitio"
-              onClick={start}
+              onClick={() => navigate({ to: "/escanear" })}
             />
             <AccessButton
               icon={<Radio className="h-7 w-7" aria-hidden />}
               label="Tocar NFC"
               hint="Acerca tu teléfono al lector"
-              onClick={start}
+              onClick={() => navigate({ to: "/nfc" })}
             />
             <AccessButton
               icon={<LinkIcon className="h-7 w-7" aria-hidden />}
               label="Ingresar con enlace"
               hint="Usa el enlace que te compartieron"
-              onClick={start}
+              onClick={startLinkDownload}
             />
           </div>
         </div>
+
+        <Link
+          to="/accesibilidad"
+          className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-border bg-card px-4 py-2 text-base font-bold text-foreground"
+        >
+          <Accessibility className="h-5 w-5 text-primary" aria-hidden />
+          Checklist de accesibilidad
+        </Link>
 
         <p className="mt-6 text-sm text-muted-foreground">
           Una vez descargado, el recorrido funciona sin internet.
@@ -122,46 +131,4 @@ function AccessButton({
   );
 }
 
-function DownloadOverlay({ progress, done }: { progress: number; done: boolean }) {
-  const r = 70;
-  const c = 2 * Math.PI * r;
-  const offset = c - (progress / 100) * c;
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-label={done ? "Descarga completada" : `Descargando ${progress} por ciento`}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur"
-    >
-      <div className="relative h-44 w-44">
-        <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
-          <circle cx="80" cy="80" r={r} stroke="var(--muted)" strokeWidth="10" fill="none" />
-          <circle
-            cx="80"
-            cy="80"
-            r={r}
-            stroke={done ? "var(--success)" : "var(--primary)"}
-            strokeWidth="10"
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray={c}
-            strokeDashoffset={offset}
-            className="transition-[stroke-dashoffset] duration-100"
-          />
-        </svg>
-        <div className="absolute inset-0 grid place-items-center">
-          {done ? (
-            <span className="grid h-20 w-20 place-items-center rounded-full bg-success text-success-foreground">
-              <Check className="h-12 w-12" aria-hidden />
-            </span>
-          ) : (
-            <span className="text-3xl font-extrabold text-primary">{progress}%</span>
-          )}
-        </div>
-      </div>
-      <p className="mt-6 px-6 text-center text-lg font-semibold">
-        {done ? "Listo. Funciona sin internet." : "Descargando recorrido completo..."}
-      </p>
-    </div>
-  );
-}
+// (DownloadOverlay now lives in src/components/DownloadOverlay.tsx)
