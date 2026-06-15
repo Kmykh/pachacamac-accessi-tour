@@ -9,11 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NfcRouteImport } from './routes/nfc'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as FinRouteImport } from './routes/fin'
+import { Route as EscanearRouteImport } from './routes/escanear'
+import { Route as AccesibilidadRouteImport } from './routes/accesibilidad'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PuntoIdRouteImport } from './routes/punto.$id'
 
+const NfcRoute = NfcRouteImport.update({
+  id: '/nfc',
+  path: '/nfc',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MapaRoute = MapaRouteImport.update({
   id: '/mapa',
   path: '/mapa',
@@ -22,6 +30,16 @@ const MapaRoute = MapaRouteImport.update({
 const FinRoute = FinRouteImport.update({
   id: '/fin',
   path: '/fin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EscanearRoute = EscanearRouteImport.update({
+  id: '/escanear',
+  path: '/escanear',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccesibilidadRoute = AccesibilidadRouteImport.update({
+  id: '/accesibilidad',
+  path: '/accesibilidad',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,40 +55,81 @@ const PuntoIdRoute = PuntoIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accesibilidad': typeof AccesibilidadRoute
+  '/escanear': typeof EscanearRoute
   '/fin': typeof FinRoute
   '/mapa': typeof MapaRoute
+  '/nfc': typeof NfcRoute
   '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accesibilidad': typeof AccesibilidadRoute
+  '/escanear': typeof EscanearRoute
   '/fin': typeof FinRoute
   '/mapa': typeof MapaRoute
+  '/nfc': typeof NfcRoute
   '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accesibilidad': typeof AccesibilidadRoute
+  '/escanear': typeof EscanearRoute
   '/fin': typeof FinRoute
   '/mapa': typeof MapaRoute
+  '/nfc': typeof NfcRoute
   '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/fin' | '/mapa' | '/punto/$id'
+  fullPaths:
+    | '/'
+    | '/accesibilidad'
+    | '/escanear'
+    | '/fin'
+    | '/mapa'
+    | '/nfc'
+    | '/punto/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/fin' | '/mapa' | '/punto/$id'
-  id: '__root__' | '/' | '/fin' | '/mapa' | '/punto/$id'
+  to:
+    | '/'
+    | '/accesibilidad'
+    | '/escanear'
+    | '/fin'
+    | '/mapa'
+    | '/nfc'
+    | '/punto/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/accesibilidad'
+    | '/escanear'
+    | '/fin'
+    | '/mapa'
+    | '/nfc'
+    | '/punto/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccesibilidadRoute: typeof AccesibilidadRoute
+  EscanearRoute: typeof EscanearRoute
   FinRoute: typeof FinRoute
   MapaRoute: typeof MapaRoute
+  NfcRoute: typeof NfcRoute
   PuntoIdRoute: typeof PuntoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/nfc': {
+      id: '/nfc'
+      path: '/nfc'
+      fullPath: '/nfc'
+      preLoaderRoute: typeof NfcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mapa': {
       id: '/mapa'
       path: '/mapa'
@@ -83,6 +142,20 @@ declare module '@tanstack/react-router' {
       path: '/fin'
       fullPath: '/fin'
       preLoaderRoute: typeof FinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/escanear': {
+      id: '/escanear'
+      path: '/escanear'
+      fullPath: '/escanear'
+      preLoaderRoute: typeof EscanearRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accesibilidad': {
+      id: '/accesibilidad'
+      path: '/accesibilidad'
+      fullPath: '/accesibilidad'
+      preLoaderRoute: typeof AccesibilidadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,8 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccesibilidadRoute: AccesibilidadRoute,
+  EscanearRoute: EscanearRoute,
   FinRoute: FinRoute,
   MapaRoute: MapaRoute,
+  NfcRoute: NfcRoute,
   PuntoIdRoute: PuntoIdRoute,
 }
 export const routeTree = rootRouteImport
