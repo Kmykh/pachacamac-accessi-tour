@@ -93,6 +93,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "AccessiTour — Pachacámac accesible" },
+      { name: "description", content: "AccessiTour Pachacámac is an accessible PWA tourism guide for young adults with disabilities." },
+      { property: "og:description", content: "AccessiTour Pachacámac is an accessible PWA tourism guide for young adults with disabilities." },
+      { name: "twitter:description", content: "AccessiTour Pachacámac is an accessible PWA tourism guide for young adults with disabilities." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0beb3baf-db23-4daf-8511-79c2f6cf209f/id-preview-5b43da1a--9b103053-f4f9-4549-b5c0-568705532448.lovable.app-1781554386410.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0beb3baf-db23-4daf-8511-79c2f6cf209f/id-preview-5b43da1a--9b103053-f4f9-4549-b5c0-568705532448.lovable.app-1781554386410.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
