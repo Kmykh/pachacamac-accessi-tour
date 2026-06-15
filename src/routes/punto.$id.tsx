@@ -4,6 +4,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Radio } from "lucide
 import { AppShell } from "@/components/AppShell";
 import { getPoint, POINTS } from "@/lib/points";
 import { speak, stopSpeak } from "@/lib/speech";
+import { useA11y } from "@/lib/a11y-context";
+
 
 export const Route = createFileRoute("/punto/$id")({
   head: ({ params }) => {
@@ -39,11 +41,11 @@ const SPEEDS = [0.75, 1, 1.25] as const;
 function PointPage() {
   const { point } = Route.useLoaderData();
   const navigate = useNavigate();
+  const { voiceFirst, easyReading: easyDefault, advanceMode, setAdvanceMode, profile } = useA11y();
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<number>(1);
-  const [easy, setEasy] = useState(false);
+  const [easy, setEasy] = useState(easyDefault);
   const [progress, setProgress] = useState(0);
-  const [autoAdvance, setAutoAdvance] = useState(true);
   const [advancing, setAdvancing] = useState(false);
   const startedAt = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
