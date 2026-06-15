@@ -176,8 +176,51 @@ function PointPage() {
           className="beacon-banner mx-4 mt-4 flex items-center gap-3 rounded-xl border-2 border-secondary/60 px-4 py-3 text-sm font-semibold text-foreground"
         >
           <Radio className="h-5 w-5 shrink-0" aria-hidden />
-          <span>Beacon detectado — reproduciendo automáticamente</span>
+          <span className="flex-1">
+            {advancing
+              ? next
+                ? `Avanzando al punto ${next.number}: ${next.name}...`
+                : "Recorrido completo. Yendo a la pantalla final..."
+              : "Beacon detectado — reproduciendo automáticamente"}
+          </span>
+          {advancing && (
+            <button
+              type="button"
+              onClick={clearAdvance}
+              className="h-9 shrink-0 rounded-md border-2 border-foreground/30 bg-background px-3 text-xs font-bold"
+            >
+              Cancelar
+            </button>
+          )}
         </div>
+
+        <div className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-xl border-2 border-border bg-card px-4 py-2 text-sm">
+          <label htmlFor="auto-advance" className="font-semibold">
+            Avance automático al siguiente punto
+          </label>
+          <button
+            id="auto-advance"
+            type="button"
+            role="switch"
+            aria-checked={autoAdvance}
+            onClick={() => {
+              setAutoAdvance((v) => {
+                if (v) clearAdvance();
+                return !v;
+              });
+            }}
+            className={`relative h-7 w-12 shrink-0 rounded-full border-2 transition-colors ${
+              autoAdvance ? "border-primary bg-primary" : "border-border bg-muted"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-card transition-transform ${
+                autoAdvance ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </div>
+
 
         {/* Audio player */}
         <div className="mx-4 mt-4 rounded-2xl border-2 border-border bg-card p-5">
