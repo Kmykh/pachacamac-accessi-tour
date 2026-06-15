@@ -74,11 +74,17 @@ function ScanQR() {
         {/* Simulated camera viewport */}
         <div
           role="img"
-          aria-label="Vista simulada de la cámara apuntando al código QR"
+          aria-label={
+            phase === "searching"
+              ? "Vista simulada de la cámara buscando un código QR dentro del recuadro."
+              : phase === "detected"
+                ? "Cámara: código QR detectado correctamente."
+                : "Cámara: código validado, iniciando descarga."
+          }
           className="relative mx-auto mt-5 aspect-square w-full overflow-hidden rounded-2xl border-2 border-border bg-[oklch(0.18_0.01_60)]"
         >
-          {/* fake "code" grid */}
-          <div className="absolute inset-0 grid place-items-center">
+          {/* fake "code" grid - decorativo */}
+          <div className="absolute inset-0 grid place-items-center" aria-hidden>
             <div className="grid grid-cols-8 gap-1 opacity-70">
               {Array.from({ length: 64 }).map((_, i) => (
                 <span
@@ -92,8 +98,8 @@ function ScanQR() {
             </div>
           </div>
 
-          {/* reticle */}
-          <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          {/* reticle - decorativo */}
+          <div className="pointer-events-none absolute inset-0 grid place-items-center" aria-hidden>
             <div className="relative h-56 w-56">
               <Corner className="left-0 top-0" />
               <Corner className="right-0 top-0 rotate-90" />
@@ -116,19 +122,20 @@ function ScanQR() {
         <div
           role="status"
           aria-live="polite"
+          aria-atomic="true"
           className="mt-5 rounded-xl border-2 border-border bg-card p-4 text-center"
         >
           {phase === "searching" && (
             <p className="flex items-center justify-center gap-2 text-base font-semibold">
               <QrCode className="h-5 w-5 text-primary" aria-hidden />
-              Buscando código QR...
+              <span>Buscando código QR…</span>
             </p>
           )}
           {phase === "detected" && (
             <p className="text-base font-bold text-success">Código QR detectado ✓</p>
           )}
           {(phase === "downloading" || phase === "done") && (
-            <p className="text-base font-bold text-primary">Validado. Preparando descarga...</p>
+            <p className="text-base font-bold text-primary">Validado. Preparando descarga…</p>
           )}
         </div>
 
