@@ -125,9 +125,8 @@ function PointPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [easy, speed]);
 
-  const idx = POINTS.findIndex((p) => p.id === point.id);
   const prev = POINTS[idx - 1];
-  const next = POINTS[idx + 1];
+  const next = nextPoint;
 
   const elapsedSec = (progress / 100) * totalSec;
   const fmt = (s: number) => {
