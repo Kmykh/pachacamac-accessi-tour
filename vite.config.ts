@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Build the SSR server with Nitro's Netlify preset. Without an explicit
+  // `nitro` option the Lovable wrapper skips Nitro entirely outside its own
+  // sandbox, so Netlify gets no server/SPA fallback and every route 404s.
+  // (In the Lovable sandbox this is overridden back to cloudflare-module.)
+  nitro: { preset: "netlify" },
 });

@@ -1,0 +1,15 @@
+# Configuración de despliegue en Netlify para esta app SSR (TanStack Start + Nitro).
+#
+# El build genera:
+#   - dist/                              → archivos estáticos (publish dir)
+#   - .netlify/functions-internal/server → función servidor (SSR), con
+#     `path: "/*"` y `preferStatic: true` declarado dentro de la función.
+# Netlify detecta automáticamente .netlify/functions-internal/, así que el
+# enrutado SSR no necesita _redirects.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
