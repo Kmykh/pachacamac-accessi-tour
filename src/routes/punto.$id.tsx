@@ -43,23 +43,54 @@ function PointPage() {
   const [speed, setSpeed] = useState<number>(1);
   const [easy, setEasy] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [advancing, setAdvancing] = useState(false);
   const startedAt = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const text = easy ? point.easy : point.full;
   // crude estimate ~ 12 chars/sec at speed 1
   const totalSec = Math.max(6, text.length / (12 * speed));
+
+  const idx = POINTS.findIndex((p) => p.id === point.id);
+  const nextPoint = POINTS[idx + 1];
+
+  const clearAdvance = () => {
+    if (advanceTimer.current) {
+      clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+    setAdvancing(false);
+  };
 
   const stop = () => {
     stopSpeak();
     setPlaying(false);
     setProgress(0);
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    clearAdvance();
+  };
+
+  const handleSpeechEnd = () => {
+    setPlaying(false);
+    setProgress(100);
+    if (!autoAdvance) return;
+    if (nextPoint) {
+      setAdvancing(true);
+      advanceTimer.current = setTimeout(() => {
+        navigate({ to: "/punto/$id", params: { id: nextPoint.id } });
+      }, 2500);
+    } else {
+      setAdvancing(true);
+      advanceTimer.current = setTimeout(() => navigate({ to: "/fin" }), 2500);
+    }
   };
 
   const play = () => {
     stopSpeak();
-    speak(text, { rate: speed });
+    clearAdvance();
+    speak(text, { rate: speed, onEnd: handleSpeechEnd });
     setPlaying(true);
     startedAt.current = performance.now();
     const tick = () => {
@@ -67,7 +98,6 @@ function PointPage() {
       const pct = Math.min(100, (elapsed / totalSec) * 100);
       setProgress(pct);
       if (pct >= 100) {
-        setPlaying(false);
         return;
       }
       rafRef.current = requestAnimationFrame(tick);
@@ -95,9 +125,8 @@ function PointPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [easy, speed]);
 
-  const idx = POINTS.findIndex((p) => p.id === point.id);
   const prev = POINTS[idx - 1];
-  const next = POINTS[idx + 1];
+  const next = nextPoint;
 
   const elapsedSec = (progress / 100) * totalSec;
   const fmt = (s: number) => {
@@ -147,8 +176,51 @@ function PointPage() {
           className="beacon-banner mx-4 mt-4 flex items-center gap-3 rounded-xl border-2 border-secondary/60 px-4 py-3 text-sm font-semibold text-foreground"
         >
           <Radio className="h-5 w-5 shrink-0" aria-hidden />
-          <span>Beacon detectado — reproduciendo automáticamente</span>
+          <span className="flex-1">
+            {advancing
+              ? next
+                ? `Avanzando al punto ${next.number}: ${next.name}...`
+                : "Recorrido completo. Yendo a la pantalla final..."
+              : "Beacon detectado — reproduciendo automáticamente"}
+          </span>
+          {advancing && (
+            <button
+              type="button"
+              onClick={clearAdvance}
+              className="h-9 shrink-0 rounded-md border-2 border-foreground/30 bg-background px-3 text-xs font-bold"
+            >
+              Cancelar
+            </button>
+          )}
         </div>
+
+        <div className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-xl border-2 border-border bg-card px-4 py-2 text-sm">
+          <label htmlFor="auto-advance" className="font-semibold">
+            Avance automático al siguiente punto
+          </label>
+          <button
+            id="auto-advance"
+            type="button"
+            role="switch"
+            aria-checked={autoAdvance}
+            onClick={() => {
+              setAutoAdvance((v) => {
+                if (v) clearAdvance();
+                return !v;
+              });
+            }}
+            className={`relative h-7 w-12 shrink-0 rounded-full border-2 transition-colors ${
+              autoAdvance ? "border-primary bg-primary" : "border-border bg-muted"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-card transition-transform ${
+                autoAdvance ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </div>
+
 
         {/* Audio player */}
         <div className="mx-4 mt-4 rounded-2xl border-2 border-border bg-card p-5">
