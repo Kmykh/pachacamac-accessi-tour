@@ -198,18 +198,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/beacon/$id': {
-      id: '/beacon/$id'
-      path: '/beacon/$id'
-      fullPath: '/beacon/$id'
-      preLoaderRoute: typeof BeaconIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/punto/$id': {
       id: '/punto/$id'
       path: '/punto/$id'
       fullPath: '/punto/$id'
       preLoaderRoute: typeof PuntoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/beacon/$id': {
+      id: '/beacon/$id'
+      path: '/beacon/$id'
+      fullPath: '/beacon/$id'
+      preLoaderRoute: typeof BeaconIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
