@@ -9,38 +9,82 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MapaRouteImport } from './routes/mapa'
+import { Route as FinRouteImport } from './routes/fin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PuntoIdRouteImport } from './routes/punto.$id'
 
+const MapaRoute = MapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinRoute = FinRouteImport.update({
+  id: '/fin',
+  path: '/fin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PuntoIdRoute = PuntoIdRouteImport.update({
+  id: '/punto/$id',
+  path: '/punto/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/fin': typeof FinRoute
+  '/mapa': typeof MapaRoute
+  '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/fin': typeof FinRoute
+  '/mapa': typeof MapaRoute
+  '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/fin': typeof FinRoute
+  '/mapa': typeof MapaRoute
+  '/punto/$id': typeof PuntoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/fin' | '/mapa' | '/punto/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/fin' | '/mapa' | '/punto/$id'
+  id: '__root__' | '/' | '/fin' | '/mapa' | '/punto/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FinRoute: typeof FinRoute
+  MapaRoute: typeof MapaRoute
+  PuntoIdRoute: typeof PuntoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mapa': {
+      id: '/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof MapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fin': {
+      id: '/fin'
+      path: '/fin'
+      fullPath: '/fin'
+      preLoaderRoute: typeof FinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/punto/$id': {
+      id: '/punto/$id'
+      path: '/punto/$id'
+      fullPath: '/punto/$id'
+      preLoaderRoute: typeof PuntoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FinRoute: FinRoute,
+  MapaRoute: MapaRoute,
+  PuntoIdRoute: PuntoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
