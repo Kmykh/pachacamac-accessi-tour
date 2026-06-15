@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Radio } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getPoint, POINTS } from "@/lib/points";
-import { speak, stopSpeak } from "@/lib/speech";
+import { pointAudioSrc } from "@/lib/narration";
+import { useNarrator } from "@/hooks/use-narrator";
 import { useA11y } from "@/lib/a11y-context";
 
 
@@ -36,24 +37,25 @@ export const Route = createFileRoute("/punto/$id")({
   component: PointPage,
 });
 
-const SPEEDS = [0.75, 1, 1.25] as const;
+// Velocidades de lectura. Por defecto empieza "calmado" (0.85) — la voz ya
+// viene pausada en el audio generado; esto la hace aún más tranquila.
+const SPEEDS = [0.85, 1, 1.25] as const;
 
 function PointPage() {
   const { point } = Route.useLoaderData();
   const navigate = useNavigate();
   const { voiceFirst, easyReading: easyDefault, advanceMode, setAdvanceMode, profile } = useA11y();
-  const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState<number>(1);
+  const { playing, progress, duration, currentTime, play: playNarration, stop: stopNarration } = useNarrator();
+  const [speed, setSpeed] = useState<number>(0.85);
   const [easy, setEasy] = useState(easyDefault);
-  const [progress, setProgress] = useState(0);
   const [advancing, setAdvancing] = useState(false);
-  const startedAt = useRef<number>(0);
-  const rafRef = useRef<number | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const text = easy ? point.easy : point.full;
-  // crude estimate ~ 12 chars/sec at speed 1
-  const totalSec = Math.max(6, text.length / (12 * speed));
+  const src = pointAudioSrc(point.id, easy);
+  // duración real del audio si existe; si no, estimación ~12 car/seg.
+  const totalSec = duration || Math.max(6, text.length / (12 * speed));
+  const elapsedSec = currentTime || (progress / 100) * totalSec;
 
   const idx = POINTS.findIndex((p) => p.id === point.id);
   const nextPoint = POINTS[idx + 1];
@@ -67,45 +69,27 @@ function PointPage() {
   };
 
   const stop = () => {
-    stopSpeak();
-    setPlaying(false);
-    setProgress(0);
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    stopNarration();
     clearAdvance();
   };
 
   const handleSpeechEnd = () => {
-    setPlaying(false);
-    setProgress(100);
-    // Solo auto-avanzar si el modo es "al terminar lectura"
+    // Solo auto-avanzar si el modo es "al terminar lectura". Damos una pausa
+    // amplia (4 s) para que no se sienta apresurado.
     if (advanceMode !== "speech-end") return;
+    setAdvancing(true);
     if (nextPoint) {
-      setAdvancing(true);
       advanceTimer.current = setTimeout(() => {
         navigate({ to: "/beacon/$id", params: { id: nextPoint.id } });
-      }, 2500);
+      }, 4000);
     } else {
-      setAdvancing(true);
-      advanceTimer.current = setTimeout(() => navigate({ to: "/fin" }), 2500);
+      advanceTimer.current = setTimeout(() => navigate({ to: "/fin" }), 4000);
     }
   };
 
   const play = () => {
-    stopSpeak();
     clearAdvance();
-    speak(text, { rate: speed, onEnd: handleSpeechEnd });
-    setPlaying(true);
-    startedAt.current = performance.now();
-    const tick = () => {
-      const elapsed = (performance.now() - startedAt.current) / 1000;
-      const pct = Math.min(100, (elapsed / totalSec) * 100);
-      setProgress(pct);
-      if (pct >= 100) {
-        return;
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
+    playNarration({ src, text, rate: speed, onEnd: handleSpeechEnd });
   };
 
   // beacon auto-play on mount — solo si el perfil prefiere voz primero
@@ -121,18 +105,12 @@ function PointPage() {
 
   // reset when text/speed change
   useEffect(() => {
-    if (playing) {
-      stopSpeak();
-      setPlaying(false);
-      setProgress(0);
-    }
+    stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [easy, speed]);
 
   const prev = POINTS[idx - 1];
   const next = nextPoint;
-
-  const elapsedSec = (progress / 100) * totalSec;
   const fmt = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);

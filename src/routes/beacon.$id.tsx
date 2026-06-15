@@ -4,7 +4,8 @@ import { ArrowLeft, Radio, Signal, MapPin, Check } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getPoint } from "@/lib/points";
 import { useA11y } from "@/lib/a11y-context";
-import { speak } from "@/lib/speech";
+import { narrateOnce, stopNarration, beaconAudioSrc } from "@/lib/narration";
+import { BEACON_LABELS, BEACON_LINES, type BeaconPhase } from "@/lib/narration-content";
 
 export const Route = createFileRoute("/beacon/$id")({
   head: ({ params }) => {
@@ -24,15 +25,18 @@ export const Route = createFileRoute("/beacon/$id")({
   component: BeaconPage,
 });
 
-type Phase = "scanning" | "weak" | "medium" | "strong" | "connected";
-
-const PHASES: { phase: Phase; rssi: number; meters: number; label: string }[] = [
-  { phase: "scanning", rssi: -95, meters: 18, label: "Buscando beacons cercanos…" },
-  { phase: "weak", rssi: -82, meters: 12, label: "Señal débil — acércate al punto" },
-  { phase: "medium", rssi: -70, meters: 6, label: "Señal media — sigue caminando" },
-  { phase: "strong", rssi: -55, meters: 2, label: "Señal fuerte — casi conectado" },
-  { phase: "connected", rssi: -42, meters: 0, label: "Beacon conectado ✓" },
+const PHASES: { phase: BeaconPhase; rssi: number; meters: number; label: string }[] = [
+  { phase: "scanning", rssi: -95, meters: 18, label: BEACON_LABELS.scanning },
+  { phase: "weak", rssi: -82, meters: 12, label: BEACON_LABELS.weak },
+  { phase: "medium", rssi: -70, meters: 6, label: BEACON_LABELS.medium },
+  { phase: "strong", rssi: -55, meters: 2, label: BEACON_LABELS.strong },
+  { phase: "connected", rssi: -42, meters: 0, label: BEACON_LABELS.connected },
 ];
+
+// Ritmo pausado: cada fase dura ~2.6 s y, al conectar, esperamos ~2.4 s antes
+// de abrir el punto. Sin prisa, para que se pueda seguir con calma por voz.
+const STEP_MS = 2600;
+const CONNECTED_MS = 2400;
 
 function BeaconPage() {
   const { point } = Route.useLoaderData();
@@ -45,20 +49,23 @@ function BeaconPage() {
 
   useEffect(() => {
     if (step >= PHASES.length - 1) {
-      const t = setTimeout(() => navigate({ to: "/punto/$id", params: { id: point.id } }), 1200);
+      const t = setTimeout(() => navigate({ to: "/punto/$id", params: { id: point.id } }), CONNECTED_MS);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setStep((s) => s + 1), 1100);
+    const t = setTimeout(() => setStep((s) => s + 1), STEP_MS);
     return () => clearTimeout(t);
   }, [step, navigate, point.id]);
 
-  // Anunciar progreso por voz si el perfil lo requiere (ciegos)
+  // Anunciar cada fase con voz amable si el perfil lo requiere (ceguera).
   useEffect(() => {
     if (!voiceFirst) return;
     if (announced.current.has(step)) return;
     announced.current.add(step);
-    speak(current.label);
-  }, [step, voiceFirst, current.label]);
+    narrateOnce(beaconAudioSrc(current.phase), BEACON_LINES[current.phase], { rate: 0.9 });
+  }, [step, voiceFirst, current.phase]);
+
+  // Cortar la narración al salir de la pantalla.
+  useEffect(() => () => stopNarration(), []);
 
   // signal "bars" 0..5
   const bars = Math.max(0, Math.min(5, Math.round(((-40 - current.rssi) / -55) * 5 + 5)));
@@ -171,10 +178,10 @@ function BeaconPage() {
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
           {profile === "visual"
-            ? "Te estamos guiando con voz. Al conectarte se reproducirá la audioguía."
+            ? "Te acompañamos con voz, sin prisa. Cuando lleguemos, comenzará tu audioguía."
             : profile === "auditiva"
-              ? "Cuando el beacon esté conectado verás el contenido en texto."
-              : "Simulación de Bluetooth. Al conectarte verás el contenido del punto."}
+              ? "Cuando lleguemos al punto verás todo el contenido en texto."
+              : "Acércate con calma al punto. Al llegar verás su contenido."}
         </p>
       </section>
 
