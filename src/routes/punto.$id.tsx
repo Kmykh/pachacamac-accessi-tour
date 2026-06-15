@@ -332,9 +332,10 @@ function PointPage() {
         >
           {prev ? (
             <Link
-              to="/punto/$id"
+              to="/beacon/$id"
               params={{ id: prev.id }}
               className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-border bg-card px-3 text-sm font-bold"
+              aria-label={`Punto anterior: ${prev.name}. Reconectar con su beacon.`}
             >
               <ChevronLeft className="h-5 w-5" aria-hidden />
               <span className="truncate">Anterior</span>
@@ -344,9 +345,10 @@ function PointPage() {
           )}
           {next ? (
             <Link
-              to="/punto/$id"
+              to="/beacon/$id"
               params={{ id: next.id }}
               className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground"
+              aria-label={`Siguiente punto: ${next.name}. Conectar con su beacon.`}
             >
               <span className="truncate">Siguiente</span>
               <ChevronRight className="h-5 w-5" aria-hidden />
