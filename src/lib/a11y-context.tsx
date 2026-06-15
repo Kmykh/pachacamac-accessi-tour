@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 type FontSize = "normal" | "grande" | "muy-grande";
+export type Profile = "none" | "visual" | "auditiva" | "cognitiva" | "motora";
+export type AdvanceMode = "speech-end" | "next-only";
 
 type Ctx = {
   highContrast: boolean;
@@ -11,6 +13,14 @@ type Ctx = {
   toggleReduceMotion: () => void;
   downloaded: boolean;
   setDownloaded: (v: boolean) => void;
+  profile: Profile;
+  setProfile: (p: Profile) => void;
+  voiceFirst: boolean;
+  setVoiceFirst: (v: boolean) => void;
+  easyReading: boolean;
+  setEasyReading: (v: boolean) => void;
+  advanceMode: AdvanceMode;
+  setAdvanceMode: (m: AdvanceMode) => void;
 };
 
 const A11yContext = createContext<Ctx | null>(null);
@@ -21,13 +31,25 @@ const FONT_SCALE: Record<FontSize, number> = {
   "muy-grande": 1.3,
 };
 
+export const PROFILE_LABEL: Record<Profile, string> = {
+  none: "Sin perfil",
+  visual: "Visual (ceguera / baja visión)",
+  auditiva: "Auditiva (sordera / hipoacusia)",
+  cognitiva: "Cognitiva (lectura fácil)",
+  motora: "Motora (movilidad reducida)",
+};
+
 export function A11yProvider({ children }: { children: ReactNode }) {
   const [highContrast, setHC] = useState(false);
   const [fontSize, setFS] = useState<FontSize>("normal");
   const [reduceMotion, setRM] = useState(false);
   const [downloaded, setDl] = useState(false);
+  const [profile, setProfileState] = useState<Profile>("none");
+  const [voiceFirst, setVF] = useState(false);
+  const [easyReading, setER] = useState(false);
+  const [advanceMode, setAM] = useState<AdvanceMode>("speech-end");
 
-  // hydrate from localStorage
+  // hydrate
   useEffect(() => {
     try {
       const raw = localStorage.getItem("accessitour:a11y");
@@ -36,6 +58,10 @@ export function A11yProvider({ children }: { children: ReactNode }) {
         if (typeof v.highContrast === "boolean") setHC(v.highContrast);
         if (v.fontSize) setFS(v.fontSize);
         if (typeof v.reduceMotion === "boolean") setRM(v.reduceMotion);
+        if (v.profile) setProfileState(v.profile);
+        if (typeof v.voiceFirst === "boolean") setVF(v.voiceFirst);
+        if (typeof v.easyReading === "boolean") setER(v.easyReading);
+        if (v.advanceMode) setAM(v.advanceMode);
       }
       setDl(localStorage.getItem("accessitour:downloaded") === "1");
     } catch {}
@@ -45,20 +71,47 @@ export function A11yProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(
         "accessitour:a11y",
-        JSON.stringify({ highContrast, fontSize, reduceMotion }),
+        JSON.stringify({ highContrast, fontSize, reduceMotion, profile, voiceFirst, easyReading, advanceMode }),
       );
     } catch {}
     const root = document.documentElement;
     root.classList.toggle("hc", highContrast);
     root.classList.toggle("reduce-motion", reduceMotion);
     root.style.setProperty("--font-scale", String(FONT_SCALE[fontSize]));
-  }, [highContrast, fontSize, reduceMotion]);
+  }, [highContrast, fontSize, reduceMotion, profile, voiceFirst, easyReading, advanceMode]);
 
   useEffect(() => {
     try {
       localStorage.setItem("accessitour:downloaded", downloaded ? "1" : "0");
     } catch {}
   }, [downloaded]);
+
+  // Aplicar preset según perfil de discapacidad
+  const setProfile = (p: Profile) => {
+    setProfileState(p);
+    if (p === "visual") {
+      setVF(true);
+      setFS("grande");
+      setER(false);
+      setAM("speech-end");
+      setRM(true);
+    } else if (p === "auditiva") {
+      setVF(false);
+      setFS("normal");
+      setER(false);
+      setAM("next-only");
+    } else if (p === "cognitiva") {
+      setVF(false);
+      setER(true);
+      setFS("grande");
+      setAM("next-only");
+      setRM(true);
+    } else if (p === "motora") {
+      setVF(false);
+      setFS("grande");
+      setAM("speech-end");
+    }
+  };
 
   return (
     <A11yContext.Provider
@@ -71,6 +124,14 @@ export function A11yProvider({ children }: { children: ReactNode }) {
         toggleReduceMotion: () => setRM((v) => !v),
         downloaded,
         setDownloaded: setDl,
+        profile,
+        setProfile,
+        voiceFirst,
+        setVoiceFirst: setVF,
+        easyReading,
+        setEasyReading: setER,
+        advanceMode,
+        setAdvanceMode: setAM,
       }}
     >
       {children}
