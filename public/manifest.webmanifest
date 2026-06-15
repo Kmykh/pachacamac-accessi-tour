@@ -1,0 +1,18 @@
+{
+  "name": "AccessiTour — Pachacámac accesible",
+  "short_name": "AccessiTour",
+  "description": "Guía turística accesible del sitio arqueológico de Pachacámac.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDF6EC",
+  "theme_color": "#9c2a1c",
+  "lang": "es-PE",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
