@@ -20,24 +20,26 @@ type Phase = "waiting" | "reading" | "validated" | "downloading" | "done";
 
 function NfcPage() {
   const navigate = useNavigate();
-  const { setDownloaded } = useA11y();
+  const { setDownloaded, voiceFirst } = useA11y();
   const [phase, setPhase] = useState<Phase>("waiting");
   const [progress, setProgress] = useState(0);
 
+  // Solo narramos por voz si el perfil la prefiere (p. ej. visual).
   useEffect(() => {
-    speak("Acerca tu teléfono al lector NFC del sitio.");
+    if (voiceFirst) speak("Acerca tu teléfono al lector NFC del sitio.");
     const t1 = setTimeout(() => {
       setPhase("reading");
-      speak("Leyendo etiqueta NFC.");
+      if (voiceFirst) speak("Leyendo etiqueta NFC.");
     }, 1500);
     const t2 = setTimeout(() => {
       setPhase("validated");
-      speak("Etiqueta validada. Iniciando descarga.");
+      if (voiceFirst) speak("Etiqueta validada. Iniciando descarga.");
     }, 3000);
     const t3 = setTimeout(() => setPhase("downloading"), 4000);
     return () => {
       [t1, t2, t3].forEach(clearTimeout);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

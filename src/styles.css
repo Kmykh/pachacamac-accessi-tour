@@ -103,13 +103,25 @@
     border-radius: 6px;
   }
 
-  /* Reduced motion */
+  /* Reduced motion: por preferencia del usuario en la app… */
   .reduce-motion *,
   .reduce-motion *::before,
   .reduce-motion *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+
+  /* …y también respetando la preferencia del sistema operativo (WCAG 2.3.3). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

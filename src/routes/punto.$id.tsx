@@ -92,10 +92,11 @@ function PointPage() {
     playNarration({ src, text, rate: speed, onEnd: handleSpeechEnd });
   };
 
-  // beacon auto-play on mount — solo si el perfil prefiere voz primero
+  // Auto-reproducir al llegar (si el usuario eligió audio). Como un guía
+  // turístico: esperamos unos segundos antes de empezar a hablar.
   useEffect(() => {
     if (!voiceFirst) return;
-    const t = setTimeout(play, 600);
+    const t = setTimeout(play, 2800);
     return () => {
       clearTimeout(t);
       stop();

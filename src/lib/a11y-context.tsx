@@ -21,6 +21,9 @@ type Ctx = {
   setEasyReading: (v: boolean) => void;
   advanceMode: AdvanceMode;
   setAdvanceMode: (m: AdvanceMode) => void;
+  /** null = el usuario aún no eligió; true/false = guía con/sin audio. */
+  audioGuide: boolean | null;
+  setAudioGuide: (v: boolean) => void;
 };
 
 const A11yContext = createContext<Ctx | null>(null);
@@ -48,6 +51,7 @@ export function A11yProvider({ children }: { children: ReactNode }) {
   const [voiceFirst, setVF] = useState(false);
   const [easyReading, setER] = useState(false);
   const [advanceMode, setAM] = useState<AdvanceMode>("speech-end");
+  const [audioGuide, setAG] = useState<boolean | null>(null);
 
   // hydrate
   useEffect(() => {
@@ -62,6 +66,7 @@ export function A11yProvider({ children }: { children: ReactNode }) {
         if (typeof v.voiceFirst === "boolean") setVF(v.voiceFirst);
         if (typeof v.easyReading === "boolean") setER(v.easyReading);
         if (v.advanceMode) setAM(v.advanceMode);
+        if (typeof v.audioGuide === "boolean") setAG(v.audioGuide);
       }
       setDl(localStorage.getItem("accessitour:downloaded") === "1");
     } catch {}
@@ -71,14 +76,20 @@ export function A11yProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(
         "accessitour:a11y",
-        JSON.stringify({ highContrast, fontSize, reduceMotion, profile, voiceFirst, easyReading, advanceMode }),
+        JSON.stringify({ highContrast, fontSize, reduceMotion, profile, voiceFirst, easyReading, advanceMode, audioGuide }),
       );
     } catch {}
     const root = document.documentElement;
     root.classList.toggle("hc", highContrast);
     root.classList.toggle("reduce-motion", reduceMotion);
     root.style.setProperty("--font-scale", String(FONT_SCALE[fontSize]));
-  }, [highContrast, fontSize, reduceMotion, profile, voiceFirst, easyReading, advanceMode]);
+  }, [highContrast, fontSize, reduceMotion, profile, voiceFirst, easyReading, advanceMode, audioGuide]);
+
+  // La elección explícita de audio (con/sin) controla la guía automática.
+  const setAudioGuide = (v: boolean) => {
+    setAG(v);
+    setVF(v);
+  };
 
   useEffect(() => {
     try {
@@ -89,28 +100,32 @@ export function A11yProvider({ children }: { children: ReactNode }) {
   // Aplicar preset según perfil de discapacidad
   const setProfile = (p: Profile) => {
     setProfileState(p);
+    let presetVoice = false;
     if (p === "visual") {
-      setVF(true);
+      presetVoice = true;
       setFS("grande");
       setER(false);
       setAM("speech-end");
       setRM(true);
+      setHC(true); // baja visión: alto contraste por defecto (WCAG)
     } else if (p === "auditiva") {
-      setVF(false);
+      presetVoice = false;
       setFS("normal");
       setER(false);
       setAM("next-only");
     } else if (p === "cognitiva") {
-      setVF(false);
+      presetVoice = false;
       setER(true);
       setFS("grande");
       setAM("next-only");
       setRM(true);
     } else if (p === "motora") {
-      setVF(false);
+      presetVoice = false;
       setFS("grande");
       setAM("speech-end");
     }
+    // Si el usuario ya eligió audio sí/no, su elección manda sobre el preset.
+    setVF(audioGuide ?? presetVoice);
   };
 
   return (
@@ -132,6 +147,8 @@ export function A11yProvider({ children }: { children: ReactNode }) {
         setEasyReading: setER,
         advanceMode,
         setAdvanceMode: setAM,
+        audioGuide,
+        setAudioGuide,
       }}
     >
       {children}

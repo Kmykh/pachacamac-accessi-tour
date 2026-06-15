@@ -26,7 +26,8 @@ function WelcomePage() {
   const [progress, setProgress] = useState<number | null>(null);
   const [done, setDone] = useState(false);
 
-  // Si aún no hay perfil definido, llevar al usuario a /perfil
+  // Al entrar: si aún no hay perfil, ir a /perfil. Si ya hay, dar la
+  // bienvenida (por voz solo si el perfil usa audio).
   useEffect(() => {
     if (profile === "none") {
       navigate({ to: "/perfil" });

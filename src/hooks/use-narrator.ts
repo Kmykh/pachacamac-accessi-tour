@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { speak, stopSpeak } from "@/lib/speech";
+import { fadeAudio } from "@/lib/narration";
+
+const FADE_MS = 450; // fundido de entrada/salida del audio
 
 // Reproductor de audioguía con controles. Prefiere el .mp3 pregenerado
 // (progreso y duración reales, pausa real, control de velocidad por
@@ -26,6 +29,7 @@ export function useNarrator() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onEndRef = useRef<(() => void) | null>(null);
   const rafRef = useRef<number | null>(null);
+  const fadeCancel = useRef<(() => void) | null>(null);
   const ttsStart = useRef(0);
   const ttsDur = useRef(0);
 
@@ -36,6 +40,8 @@ export function useNarrator() {
 
   const stop = useCallback(() => {
     stopSpeak();
+    fadeCancel.current?.();
+    fadeCancel.current = null;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.onended = null;
@@ -90,7 +96,9 @@ export function useNarrator() {
 
       const audio = new Audio(opts.src);
       audio.playbackRate = rate;
+      audio.volume = 0; // arrancamos en silencio para el fundido de entrada
       audioRef.current = audio;
+      let fadedOut = false;
       audio.onerror = fallback;
       audio.onloadedmetadata = () => {
         if (Number.isFinite(audio.duration)) setDuration(audio.duration);
@@ -99,9 +107,20 @@ export function useNarrator() {
         if (!audio.duration) return;
         setCurrentTime(audio.currentTime);
         setProgress((audio.currentTime / audio.duration) * 100);
+        // fundido de salida en los últimos ~0.45 s
+        if (audio.duration - audio.currentTime <= FADE_MS / 1000 && !fadedOut) {
+          fadedOut = true;
+          fadeCancel.current = fadeAudio(audio, 0, FADE_MS);
+        }
       };
       audio.onended = finish;
-      audio.play().then(() => setPlaying(true)).catch(fallback);
+      audio
+        .play()
+        .then(() => {
+          setPlaying(true);
+          fadeCancel.current = fadeAudio(audio, 1, FADE_MS); // fundido de entrada
+        })
+        .catch(fallback);
     },
     [stop],
   );

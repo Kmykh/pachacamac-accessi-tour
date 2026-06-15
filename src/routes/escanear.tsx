@@ -20,22 +20,24 @@ type Phase = "searching" | "detected" | "downloading" | "done";
 
 function ScanQR() {
   const navigate = useNavigate();
-  const { setDownloaded } = useA11y();
+  const { setDownloaded, voiceFirst } = useA11y();
   const [phase, setPhase] = useState<Phase>("searching");
   const [progress, setProgress] = useState(0);
 
   // simulated validation: searching → detected → download
+  // Solo narramos por voz si el perfil la prefiere (p. ej. visual).
   useEffect(() => {
-    speak("Buscando código QR. Apunta la cámara al cartel del sitio.");
+    if (voiceFirst) speak("Buscando código QR. Apunta la cámara al cartel del sitio.");
     const t1 = setTimeout(() => {
       setPhase("detected");
-      speak("Código QR detectado. Iniciando descarga del recorrido.");
+      if (voiceFirst) speak("Código QR detectado. Iniciando descarga del recorrido.");
     }, 2200);
     const t2 = setTimeout(() => setPhase("downloading"), 3600);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

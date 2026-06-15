@@ -52,6 +52,20 @@ function withPauses(text: string, breakSec = 0.7): string {
     .join(` <break time="${breakSec}s" /> `);
 }
 
+/**
+ * Envuelve el texto con un pequeño silencio al inicio y al final para que el
+ * audio "nazca" y "termine" suave (no de golpe). Se combina con el fundido de
+ * volumen que aplica la app al reproducir.
+ */
+function soft(text: string): string {
+  return `<break time="0.35s" /> ${text} <break time="0.7s" />`;
+}
+
+/** Versión más ligera para frases cortas (beacons): fluye sin grandes silencios. */
+function softLight(text: string): string {
+  return `<break time="0.25s" /> ${text} <break time="0.45s" />`;
+}
+
 async function tts(text: string, outPath: string) {
   const res = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128`,
@@ -83,13 +97,14 @@ function buildJobs(): Job[] {
   // Audio de cada punto: versión completa y versión de lectura fácil.
   for (const p of POINTS) {
     const intro = `${p.name}. <break time="0.9s" /> `;
-    jobs.push({ name: `punto-${p.id}-full`, text: intro + withPauses(p.full) });
-    jobs.push({ name: `punto-${p.id}-easy`, text: intro + withPauses(p.easy, 0.9) });
+    jobs.push({ name: `punto-${p.id}-full`, text: soft(intro + withPauses(p.full)) });
+    jobs.push({ name: `punto-${p.id}-easy`, text: soft(intro + withPauses(p.easy, 0.9)) });
   }
 
   // Audio de cada fase de conexión del beacon (compartido por todos los puntos).
+  // Pausas cortas entre frases para que suene natural, no entrecortado.
   for (const [phase, line] of Object.entries(BEACON_LINES)) {
-    jobs.push({ name: `beacon-${phase}`, text: withPauses(line, 0.5) });
+    jobs.push({ name: `beacon-${phase}`, text: softLight(withPauses(line, 0.3)) });
   }
 
   return jobs;

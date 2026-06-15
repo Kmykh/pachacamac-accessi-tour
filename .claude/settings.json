@@ -3,7 +3,13 @@
     "allow": [
       "Bash(npm install *)",
       "Bash(npm run *)",
-      "Bash(break)"
+      "Bash(break)",
+      "Bash(npx -y @posthog/wizard@latest --help)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(rm -f public/audio/beacon-*.mp3 && npm run audio 2>&1 | tail -10)"
+    ],
+    "additionalDirectories": [
+      "/Users/maycolrojas/Documents/GitHub/pachacamac-accessi-tour/public/audio"
     ]
   }
 }

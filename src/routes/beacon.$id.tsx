@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Radio, Signal, MapPin, Check } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { getPoint } from "@/lib/points";
@@ -33,36 +33,49 @@ const PHASES: { phase: BeaconPhase; rssi: number; meters: number; label: string 
   { phase: "connected", rssi: -42, meters: 0, label: BEACON_LABELS.connected },
 ];
 
-// Ritmo pausado: cada fase dura ~2.6 s y, al conectar, esperamos ~2.4 s antes
-// de abrir el punto. Sin prisa, para que se pueda seguir con calma por voz.
-const STEP_MS = 2600;
-const CONNECTED_MS = 2400;
+// Ritmo pausado SIN audio (avance por tiempo). Con audio, cada fase avanza
+// cuando termina su narración (ver efecto de abajo), así nunca se entrecorta.
+const STEP_MS = 3400; // pausa entre fases cuando no hay voz
+const CONNECTED_MS = 3000; // pausa antes de abrir el punto, sin voz
+const STEP_GAP = 950; // pausa natural tras terminar el audio de una fase
+const CONNECTED_GAP = 1500; // pausa tras el audio de "conectado"
+const VOICE_RATE = 0.86; // un poco más lento = más natural
 
 function BeaconPage() {
   const { point } = Route.useLoaderData();
   const navigate = useNavigate();
   const { voiceFirst, profile } = useA11y();
   const [step, setStep] = useState(0);
-  const announced = useRef<Set<number>>(new Set());
 
   const current = PHASES[step];
 
+  // Avanzar de fase: si hay voz, esperamos a que el audio termine (+ una pausa
+  // natural); si no hay voz, avanzamos por tiempo, lento.
   useEffect(() => {
-    if (step >= PHASES.length - 1) {
-      const t = setTimeout(() => navigate({ to: "/punto/$id", params: { id: point.id } }), CONNECTED_MS);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setStep((s) => s + 1), STEP_MS);
-    return () => clearTimeout(t);
-  }, [step, navigate, point.id]);
+    const isLast = step >= PHASES.length - 1;
+    const advance = () => {
+      if (isLast) navigate({ to: "/punto/$id", params: { id: point.id } });
+      else setStep((s) => s + 1);
+    };
 
-  // Anunciar cada fase con voz amable si el perfil lo requiere (ceguera).
-  useEffect(() => {
-    if (!voiceFirst) return;
-    if (announced.current.has(step)) return;
-    announced.current.add(step);
-    narrateOnce(beaconAudioSrc(current.phase), BEACON_LINES[current.phase], { rate: 0.9 });
-  }, [step, voiceFirst, current.phase]);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const after = (ms: number) => {
+      timer = setTimeout(advance, ms);
+    };
+
+    if (voiceFirst) {
+      narrateOnce(beaconAudioSrc(current.phase), BEACON_LINES[current.phase], {
+        rate: VOICE_RATE,
+        onEnd: () => after(isLast ? CONNECTED_GAP : STEP_GAP),
+      });
+    } else {
+      after(isLast ? CONNECTED_MS : STEP_MS);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [step, voiceFirst, current.phase, navigate, point.id]);
 
   // Cortar la narración al salir de la pantalla.
   useEffect(() => () => stopNarration(), []);
